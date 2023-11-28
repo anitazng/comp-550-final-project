@@ -1,7 +1,6 @@
 import pandas as pd
 from collections import defaultdict
 from collections import Counter
-import json
 from gensim.models import Word2Vec
 from pypinyin import lazy_pinyin, Style
 
@@ -45,7 +44,8 @@ def group_homophones(char_embeddings):
 
 def get_frequency(datafile):
     '''
-    Returns dictionary with key: frequency and value: list of characters that have that frequency
+    Returns (1) dictionary with key: character and value: frequency of that character
+            (2) dictionary with key: frequency and value: list of characters that have that frequency.
     '''
     df = pd.read_csv(datafile)
     frequencies = Counter()
@@ -67,6 +67,9 @@ def get_frequency(datafile):
     return frequencies, reverse_frequencies
 
 def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_frequency_dict):
+    '''
+    Prints average baseline similary, average homohpone group similarity, and difference between the two.
+    '''
     baseline_similarity = 0
     baseline_counter = 0
     homophone_similarity = 0
@@ -75,15 +78,26 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     for homophones in homophone_groups.values():
         if len(homophones) > 1:
             for h1, embedding in homophones: # compute average homophone pair distance and baseline distance for each homophone
-                frequency = frequency_dict[h1]
-                similar_frequency_chars = reverse_frequency_dict[frequency]
-
-                for similar_frequency_char in similar_frequency_chars:
-                    baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
-                    baseline_counter += 1
-
                 for h2, embedding in homophones:
                     if h1 != h2:
+                        # compute baseline similarities
+                        frequency = frequency_dict[h2]
+                        similar_frequency_chars = reverse_frequency_dict[frequency]
+
+                        if len(similar_frequency_chars) == 0: # no characters of same frequency, so check nearby frequencies
+                            for i in range(1, 100):
+                                if len(reverse_frequency_dict[frequency + i]) != 0:
+                                    similar_frequency_chars = reverse_frequency_dict[frequency + i]
+                                    break
+                                elif len(reverse_frequency_dict[frequency - i]) != 0:
+                                    similar_frequency_chars = reverse_frequency_dict[frequency - i]
+                                    break
+
+                        for similar_frequency_char in similar_frequency_chars:
+                            baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
+                            baseline_counter += 1
+
+                        # compute homophone similarities
                         homophone_similarity += all_embeddings.wv.similarity(h1, h2)
                         homophone_counter += 1
 
@@ -91,7 +105,7 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     homophone_average = homophone_similarity / homophone_counter
     print(f'Average Baseline Similarity: {baseline_average}')
     print(f'Average Homophone Group Similarity: {homophone_average}')
-    print(f'Average Difference Between Baseline and Homophone Similarities: {baseline_average - homophone_average}')
+    print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
     embeddings = generate_character_embeddings('transcripts.tsv')
