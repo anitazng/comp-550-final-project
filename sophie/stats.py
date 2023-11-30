@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 # Load the data from the CSV file
-df = pd.read_csv('results.csv')
+df = pd.read_csv(open('results.tsv', 'r'))
 
 # Define the independent and dependent variables
 X = df['similarity']
