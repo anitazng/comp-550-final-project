@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 # Load the data from the CSV file
-df = pd.read_csv('results.csv')
+df = pd.read_csv('results-min1.csv')
 
 # Define the independent and dependent variables
 X = df['similarity']
@@ -12,7 +12,7 @@ y = df['baseline']
 X = sm.add_constant(X)
 
 # Fit the probit model
-model = sm.OLS(y, X)
+model = sm.Probit(y, X)
 result = model.fit()
 
 # Print the summary of the regression

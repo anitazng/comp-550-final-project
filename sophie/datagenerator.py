@@ -19,7 +19,7 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300)
+    model = Word2Vec(tokenized_sentences, vector_size=1000, min_count=1)
     model.save('anita/wv')
 
     return model
@@ -85,25 +85,25 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
                         # compute baseline similarities
                         # append two homophones to row
 
-                        frequency = frequency_dict[h2]
+                        frequency = frequency_dict[h1]
                         similar_frequency_chars = reverse_frequency_dict[frequency]
 
                         if len(similar_frequency_chars) == 0: # no characters of same frequency, so check nearby frequencies
                             for i in range(1, 100):
-                                if len(reverse_frequency_dict[frequency + i]) != 0:
+                                if len(reverse_frequency_dict[frequency + i]) != 0 and reverse_frequency_dict[frequency + i] != h1:
                                     similar_frequency_chars = reverse_frequency_dict[frequency + i]
                                     break
-                                elif len(reverse_frequency_dict[frequency - i]) != 0:
+                                elif len(reverse_frequency_dict[frequency - i]) != 0 and reverse_frequency_dict[frequency - i] != h1:
                                     similar_frequency_chars = reverse_frequency_dict[frequency - i]
                                     break
 
                         for similar_frequency_char in similar_frequency_chars:
                             row = []
-                            row.append(h2)
+                            row.append(h1)
                             row.append(similar_frequency_char)
                             row.append(all_embeddings.wv.similarity(h1, similar_frequency_char))
                             row.append(1)
-                            with open(file="results.tsv", mode="a") as filename:
+                            with open(file="results.tsv", mode="w") as filename:
                                 filename = csv.writer(filename)
                                 filename.writerow(row)
                             baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
@@ -116,7 +116,7 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
                         row.append(h2)
                         row.append(all_embeddings.wv.similarity(h1, h2))
                         row.append(0)
-                        with open(file="results.tsv", mode="a") as filename:
+                        with open(file="results.tsv", mode="w") as filename:
                                 filename = csv.writer(filename)
                                 filename.writerow(row)
                         homophone_counter += 1
