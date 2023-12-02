@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 # Load the data from the CSV file
-df = pd.read_csv('new-results-min1.csv')
+df = pd.read_csv('data/results-min5.csv')
 
 # Define the independent and dependent variables
 X = df['similarity']

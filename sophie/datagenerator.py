@@ -19,7 +19,7 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=1000, min_count=1, min_count=1)
+    model = Word2Vec(tokenized_sentences, vector_size=300)
     model.save('anita/wv')
 
     return model
@@ -76,50 +76,43 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     homophone_similarity = 0
     homophone_counter = 0
 
-    for homophones in homophone_groups.values():
-        if len(homophones) > 1:
-            for h1, embedding in homophones: # compute average homophone pair distance and baseline distance for each homophone
-                for h2, embedding in homophones:
-                    row = []
-                    if h1 != h2:
-                        # compute baseline similarities
-                        # append two homophones to row
-
-                        frequency = frequency_dict[h1]
-                        similar_frequency_chars = reverse_frequency_dict[frequency]
-
-                        if len(similar_frequency_chars) == 0: # no characters of same frequency, so check nearby frequencies
-                            for i in range(1, 100):
-                                if len(reverse_frequency_dict[frequency + i]) != 0 and reverse_frequency_dict[frequency + i] != h1:
-                                    similar_frequency_chars = reverse_frequency_dict[frequency + i]
-                                    break
-                                elif len(reverse_frequency_dict[frequency - i]) != 0 and reverse_frequency_dict[frequency - i] != h1:
-                                    similar_frequency_chars = reverse_frequency_dict[frequency - i]
-                                    break
-
-                        for similar_frequency_char in similar_frequency_chars:
-                            row = []
-                            row.append(h1)
-                            row.append(similar_frequency_char)
-                            row.append(all_embeddings.wv.similarity(h1, similar_frequency_char))
-                            row.append(1)
-                            with open(file="results.tsv", mode="w") as filename:
-                                filename = csv.writer(filename)
-                                filename.writerow(row)
-                            baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
-                            baseline_counter += 1
-
-                        # compute homophone similarities
-                        homophone_similarity += all_embeddings.wv.similarity(h1, h2)
+    with open(file="data/results-min5.csv", mode="w") as filename:
+        writer = csv.writer(filename)
+        for homophones in homophone_groups.values():
+            if len(homophones) > 1:
+                for h1, embedding in homophones: # compute average homophone pair distance and baseline distance for each homophone
+                    for h2, embedding in homophones:
                         row = []
-                        row.append(h1)
-                        row.append(h2)
-                        row.append(all_embeddings.wv.similarity(h1, h2))
-                        row.append(0)
-                        with open(file="results.tsv", mode="w") as filename:
-                                filename = csv.writer(filename)
-                                filename.writerow(row)
-                        homophone_counter += 1
+                        if h1 != h2:
+                            # compute baseline similarities
+                            # append two homophones to row in results file
+
+                            frequency = frequency_dict[h2]
+                            similar_frequency_chars = reverse_frequency_dict[frequency]
+
+                            if len(similar_frequency_chars) == 0: # no characters of same frequency, so check nearby frequencies
+                                for i in range(1, 100):
+                                    if len(reverse_frequency_dict[frequency + i]) != 0 and reverse_frequency_dict[frequency + i] != h1:
+                                        similar_frequency_chars = reverse_frequency_dict[frequency + i]
+                                        break
+                                    elif len(reverse_frequency_dict[frequency - i]) != 0 and reverse_frequency_dict[frequency - i] != h1:
+                                        similar_frequency_chars = reverse_frequency_dict[frequency - i]
+                                        break
+                            
+                            for similar_frequency_char in similar_frequency_chars:
+                                if similar_frequency_char != h1:
+                                    row = [h1, similar_frequency_char, all_embeddings.wv.similarity(h1, similar_frequency_char), 1]
+                                    writer.writerow(row)
+
+                                baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
+                                baseline_counter += 1
+
+                            # compute homophone similarities
+                            row = [h1, h2, all_embeddings.wv.similarity(h1, h2), 0]
+                            writer.writerow(row)
+
+                            homophone_similarity += all_embeddings.wv.similarity(h1, h2)
+                            homophone_counter += 1
 
     baseline_average = baseline_similarity / baseline_counter
     homophone_average = homophone_similarity / homophone_counter
@@ -128,8 +121,8 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
-    embeddings = generate_character_embeddings('transcripts-12k.tsv')
+    embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
     homophone_groups = group_homophones(embeddings)
-    frequency_dict, reverse_frequency_dict = get_frequency('transcripts-12k.tsv')
+    frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
 
     compute_distance(homophone_groups, embeddings, frequency_dict, reverse_frequency_dict)
