@@ -18,8 +18,32 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=100)
     model.save('anita/wv')
+
+    return model
+
+def generate_pinyin_embeddings(datafile):
+    '''
+    Generate pinyin embeddings using word2vec algorithm.
+    Returns trained pinyin embedding model.
+    '''
+    df = pd.read_csv(datafile)
+    sentences = df.values.tolist()
+    tokenized_sentences = []
+
+    for sentence in sentences:
+        characters = list("".join(sentence))
+        pinyins = []
+
+        for char in characters:
+            pinyin = lazy_pinyin(char, style=Style.TONE3)
+            pinyins.extend(pinyin)
+
+        tokenized_sentences.append("".join(pinyins))
+
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
+    model.save('anita/wv-pinyin')
 
     return model
 
@@ -110,8 +134,9 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
-    embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
-    homophone_groups = group_homophones(embeddings)
-    frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
+    # embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
+    # homophone_groups = group_homophones(embeddings)
+    # frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
 
-    compute_distance(homophone_groups, embeddings, frequency_dict, reverse_frequency_dict)
+    # compute_distance(homophone_groups, embeddings, frequency_dict, reverse_frequency_dict)
+    generate_pinyin_embeddings('data/transcripts-12k.tsv')
