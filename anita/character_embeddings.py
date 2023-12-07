@@ -33,7 +33,7 @@ def group_homophones(char_embeddings):
     
     for char in chars:
         pinyin = lazy_pinyin(char, style=Style.TONE3)
-        homophone_groups["".join(pinyin)].append((char, char_embeddings.wv[char]))
+        homophone_groups["".join(pinyin)].append(char)
 
     # print groups of homophones
     # for pinyin, embeddings in homophone_groups.items():
@@ -76,9 +76,10 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     homophone_counter = 0
 
     for homophones in homophone_groups.values():
+        homophones = set(homophones)
         if len(homophones) > 1:
-            for h1, embedding in homophones: # compute average homophone pair distance and baseline distance for each homophone
-                for h2, embedding in homophones:
+            for h1 in homophones: # compute average homophone pair distance and baseline distance for each homophone
+                for h2 in homophones:
                     if h1 != h2:
                         # compute baseline similarities
                         frequency = frequency_dict[h2]
@@ -94,7 +95,7 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
                                     break
 
                         for similar_frequency_char in similar_frequency_chars:
-                            if similar_frequency_char != h1:
+                            if similar_frequency_char not in homophones:
                                 baseline_similarity += all_embeddings.wv.similarity(h1, similar_frequency_char)
                                 baseline_counter += 1
 

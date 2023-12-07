@@ -27,14 +27,14 @@ def generate_character_embeddings(datafile):
 def group_homophones(char_embeddings):
     '''
     Group homophones (same pinyin and tone) from our trained embeddings.
-    Returns dictionary with key:pinyin and value:list of embeddings that correspond to that pinyin.
+    Returns dictionary with key:pinyin and value:list of chars that correspond to that pinyin.
     '''
     homophone_groups = defaultdict(list)
     chars = list(char_embeddings.wv.index_to_key)
     
     for char in chars:
         pinyin = lazy_pinyin(char, style=Style.TONE3)
-        homophone_groups["".join(pinyin)].append((char, char_embeddings.wv[char]))
+        homophone_groups["".join(pinyin)].append(char)
 
     # print groups of homophones
     # for pinyin, embeddings in homophone_groups.items():
@@ -79,9 +79,10 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     with open(file="data/results-min5.csv", mode="w") as filename:
         writer = csv.writer(filename)
         for homophones in homophone_groups.values():
+            homophones = set(homophones)
             if len(homophones) > 1:
-                for h1, embedding in homophones: # compute average homophone pair distance and baseline distance for each homophone
-                    for h2, embedding in homophones:
+                for h1 in homophones: # compute average homophone pair distance and baseline distance for each homophone
+                    for h2 in homophones:
                         row = []
                         if h1 != h2:
                             # compute baseline similarities
@@ -100,7 +101,7 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
                                         break
                             
                             for similar_frequency_char in similar_frequency_chars:
-                                if similar_frequency_char != h1:
+                                if similar_frequency_char not in homophones:
                                     row = [h1, similar_frequency_char, all_embeddings.wv.similarity(h1, similar_frequency_char), 1]
                                     writer.writerow(row)
 
