@@ -18,7 +18,7 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300, min_count=1, window=3)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
     model.save('anita/wv')
 
     return model
@@ -109,8 +109,8 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
-    embeddings = generate_character_embeddings('transcripts-12k.tsv')
+    embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
     homophone_groups = group_homophones(embeddings)
-    frequency_dict, reverse_frequency_dict = get_frequency('transcripts-12k.tsv')
+    frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
 
     compute_distance(homophone_groups, embeddings, frequency_dict, reverse_frequency_dict)
