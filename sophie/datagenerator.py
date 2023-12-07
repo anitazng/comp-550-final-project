@@ -19,7 +19,7 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
     model.save('anita/wv')
 
     return model
