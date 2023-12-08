@@ -16,7 +16,7 @@ class callback(CallbackAny2Vec):
     def on_epoch_end(self, model):
         loss = model.get_latest_training_loss()
         if self.epoch == 20:
-            print('Loss after epoch {}: {}'.format(self.epoch, loss - self.loss_previous_step))
+            print('Loss after epoch {}: {}'.format(self.epoch, loss - self.loss_previous_step)) # only print final loss after completing all epochs
         self.epoch += 1
         self.loss_previous_step = loss
 
