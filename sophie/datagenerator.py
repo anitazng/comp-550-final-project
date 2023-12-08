@@ -3,7 +3,22 @@ import csv
 from collections import defaultdict
 from collections import Counter
 from gensim.models import Word2Vec
+from gensim.models.callbacks import CallbackAny2Vec
 from pypinyin import lazy_pinyin, Style
+
+class callback(CallbackAny2Vec):
+    """
+    Callback to print loss after each epoch
+    """
+    def __init__(self):
+        self.epoch = 1
+
+    def on_epoch_end(self, model):
+        loss = model.get_latest_training_loss()
+        if self.epoch == 20:
+            print('Loss after epoch {}: {}'.format(self.epoch, loss - self.loss_previous_step))
+        self.epoch += 1
+        self.loss_previous_step = loss
 
 def generate_character_embeddings(datafile):
     '''
@@ -19,8 +34,32 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20, compute_loss=True, callbacks=[callback()])
     model.save('anita/wv')
+
+    return model
+
+def generate_pinyin_embeddings(datafile):
+    '''
+    Generate pinyin embeddings using word2vec algorithm.
+    Returns trained pinyin embedding model.
+    '''
+    df = pd.read_csv(datafile)
+    sentences = df.values.tolist()
+    tokenized_sentences = []
+
+    for sentence in sentences:
+        characters = list("".join(sentence))
+        pinyins = []
+
+        for char in characters:
+            pinyin = lazy_pinyin(char, style=Style.TONE3)
+            pinyins.extend(pinyin)
+
+        tokenized_sentences.append("".join(pinyins))
+
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20, compute_loss=True, callbacks=[callback()])
+    model.save('anita/wv-pinyin')
 
     return model
 

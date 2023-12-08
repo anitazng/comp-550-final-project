@@ -2,7 +2,22 @@ import pandas as pd
 from collections import defaultdict
 from collections import Counter
 from gensim.models import Word2Vec
+from gensim.models.callbacks import CallbackAny2Vec
 from pypinyin import lazy_pinyin, Style
+
+class callback(CallbackAny2Vec):
+    """
+    Callback to print loss after each epoch
+    """
+    def __init__(self):
+        self.epoch = 1
+
+    def on_epoch_end(self, model):
+        loss = model.get_latest_training_loss()
+        if self.epoch == 20:
+            print('Loss after epoch {}: {}'.format(self.epoch, loss - self.loss_previous_step))
+        self.epoch += 1
+        self.loss_previous_step = loss
 
 def generate_character_embeddings(datafile):
     '''
@@ -18,7 +33,7 @@ def generate_character_embeddings(datafile):
         tokenized_sentences.append(list("".join(sentence)))
 
     # generate word2vec embeddings
-    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=100)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20, compute_loss=True, callbacks=[callback()])
     model.save('anita/wv')
 
     return model
@@ -42,7 +57,7 @@ def generate_pinyin_embeddings(datafile):
 
         tokenized_sentences.append("".join(pinyins))
 
-    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20)
+    model = Word2Vec(tokenized_sentences, vector_size=300, epochs=20, compute_loss=True, callbacks=[callback()])
     model.save('anita/wv-pinyin')
 
     return model
@@ -134,7 +149,7 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
-    # embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
+    embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
     # homophone_groups = group_homophones(embeddings)
     # frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
 
