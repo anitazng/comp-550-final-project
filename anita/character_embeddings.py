@@ -16,6 +16,8 @@ class callback(CallbackAny2Vec):
         loss = model.get_latest_training_loss()
         if self.epoch == 20:
             print('Loss after epoch {}: {}'.format(self.epoch, loss - self.loss_previous_step)) # only print final loss after completing all epochs
+            # print('Perplexity after epoch {}: {}'.format(self.epoch, 2 ** (loss - self.loss_previous_step)))
+            # gonna keep this commented out until we get low enough loss to justify printing perplexity....
         self.epoch += 1
         self.loss_previous_step = loss
 
@@ -149,9 +151,9 @@ def compute_distance(homophone_groups, all_embeddings, frequency_dict, reverse_f
     print(f'Difference Between Average Baseline and Homophone Similarities: {baseline_average - homophone_average}')
 
 if __name__ == "__main__":
-    embeddings = generate_character_embeddings('data/transcripts-12k.tsv')
+    embeddings = generate_character_embeddings('data/usable-dev.txt')
     # homophone_groups = group_homophones(embeddings)
     # frequency_dict, reverse_frequency_dict = get_frequency('data/transcripts-12k.tsv')
 
     # compute_distance(homophone_groups, embeddings, frequency_dict, reverse_frequency_dict)
-    generate_pinyin_embeddings('data/transcripts-12k.tsv')
+    generate_pinyin_embeddings('data/usable-dev.txt')
