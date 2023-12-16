@@ -40,7 +40,7 @@ def get_homophone_group_embeddings():
     
     for chars in homophone_groups.values():
         group = {}
-        if len(chars) > 1:
+        if len(chars) > 8:
             for char in chars:
                 embedding_tensor = word2vec(char)
                 # Convert PyTorch tensor to NumPy array
@@ -65,49 +65,51 @@ if __name__ == "__main__":
     # Extract embeddings and characters lists
     freq_list = get_frequency_list('data/pretrained/words.txt')
     group_embeddings = get_homophone_group_embeddings()
-    homophone_chars = list(group_embeddings[3].keys())
-    print(homophone_chars)
-    homophone_embeddings = np.array(list(group_embeddings[3].values()))
-    baseline_chars = []
-    baseline_embeddings = []
 
-    for i in range(1, len(homophone_chars)):
-        for j in range(1, 100):
-            h2_index = freq_list.index(homophone_chars[i])
-            if h2_index + j < len(freq_list) and freq_list[h2_index + j] not in homophone_chars:
-                similar_frequency_char = freq_list[h2_index + j]
-                break
-            elif h2_index - j >= 0 and freq_list[h2_index - j] not in homophone_chars:
-                similar_frequency_char = freq_list[h2_index - j]
-                break
+    for x in range(20):
+        homophone_chars = list(group_embeddings[x].keys())
+        homophone_embeddings = list(group_embeddings[x].values())
+        baseline_chars = []
+        baseline_embeddings = []
 
-        baseline_chars.append(similar_frequency_char)
-        baseline_embeddings.append(word2vec(similar_frequency_char).detach().numpy())
+        for i in range(1, len(homophone_chars)):
+            for j in range(1, 100):
+                h2_index = freq_list.index(homophone_chars[i])
+                if h2_index + j < len(freq_list) and freq_list[h2_index + j] not in homophone_chars:
+                    similar_frequency_char = freq_list[h2_index + j]
+                    break
+                elif h2_index - j >= 0 and freq_list[h2_index - j] not in homophone_chars:
+                    similar_frequency_char = freq_list[h2_index - j]
+                    break
 
-    # Reduce dimensionality for visualization
-    tsne = TSNE(n_components=2, random_state=42, perplexity=5)
-    homophone_embeddings_2d = tsne.fit_transform(homophone_embeddings)
-    baseline_embeddings_2d = tsne.fit_transform(np.array(baseline_embeddings))
+            baseline_chars.append(similar_frequency_char)
+            baseline_embeddings.append(word2vec(similar_frequency_char).detach().numpy())
 
-    # Plot the embeddings
-    matplotlib.rcParams.update(
-        {
-            'font.family': 'Heiti TC',
-            'axes.unicode_minus': False
-        }
-    )
-    plt.figure(figsize=(10, 8))
-    plt.scatter(homophone_embeddings_2d[:, 0], homophone_embeddings_2d[:, 1], alpha=0.7, color='blue')
-    plt.scatter(baseline_embeddings_2d[:, 0], baseline_embeddings_2d[:, 1], alpha=0.7, color='red')
+        # Reduce dimensionality for visualization
+        tsne = TSNE(n_components=2, random_state=42, perplexity=5)
+        homophone_embeddings_2d = tsne.fit_transform(np.array(homophone_embeddings))
+        baseline_embeddings_2d = tsne.fit_transform(np.array(baseline_embeddings))
 
-    # Annotate points with characters
-    for i, char in enumerate(homophone_chars):
-        plt.annotate(char, (homophone_embeddings_2d[i, 0], homophone_embeddings_2d[i, 1]), fontsize=8)
+        # Plot the embeddings
+        matplotlib.rcParams.update(
+            {
+                'font.family': 'Heiti TC',
+                'axes.unicode_minus': False
+            }
+        )
+        plt.figure(figsize=(10, 8))
+        plt.scatter(homophone_embeddings_2d[:, 0][1:], homophone_embeddings_2d[:, 1][1:], alpha=0.7, color='blue')
+        plt.scatter(baseline_embeddings_2d[:, 0], baseline_embeddings_2d[:, 1], alpha=0.7, color='red')
+        plt.scatter(homophone_embeddings_2d[:, 0][0], homophone_embeddings_2d[:, 1][0], alpha=0.7, color='green')
 
-    for i, char in enumerate(baseline_chars):
-        plt.annotate(char, (baseline_embeddings_2d[i, 0], baseline_embeddings_2d[i, 1]), fontsize=8)
+        # Annotate points with characters
+        for i, char in enumerate(homophone_chars):
+            plt.annotate(char, (homophone_embeddings_2d[i, 0], homophone_embeddings_2d[i, 1]), fontsize=8)
 
-    plt.title('t-SNE Visualization of Character Embeddings')
-    plt.xlabel('Dimension 1')
-    plt.ylabel('Dimension 2')
-    plt.show()
+        for i, char in enumerate(baseline_chars):
+            plt.annotate(char, (baseline_embeddings_2d[i, 0], baseline_embeddings_2d[i, 1]), fontsize=8)
+
+        plt.title('t-SNE Visualization of Character Embeddings')
+        plt.xlabel('Dimension 1')
+        plt.ylabel('Dimension 2')
+        plt.savefig(f'plots/t-SNE Visualization {str(x + 1)}.png')
