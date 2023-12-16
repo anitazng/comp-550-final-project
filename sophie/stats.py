@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 # Load the data from the CSV file
-df = pd.read_csv('data/pretrained/outputdata.csv')
+df = pd.read_csv('data/pretrained/pseudo_homophone_output.csv')
 
 # Define the independent and dependent variables
 X = df['similarity']
