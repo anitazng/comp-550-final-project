@@ -65,8 +65,9 @@ if __name__ == "__main__":
     # Extract embeddings and characters lists
     freq_list = get_frequency_list('data/pretrained/words.txt')
     group_embeddings = get_homophone_group_embeddings()
-    homophone_chars = list(group_embeddings[0].keys())
-    homophone_embeddings = np.array(list(group_embeddings[0].values()))
+    homophone_chars = list(group_embeddings[3].keys())
+    print(homophone_chars)
+    homophone_embeddings = np.array(list(group_embeddings[3].values()))
     baseline_chars = []
     baseline_embeddings = []
 
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         baseline_embeddings.append(word2vec(similar_frequency_char).detach().numpy())
 
     # Reduce dimensionality for visualization
-    tsne = TSNE(n_components=2, random_state=42)
+    tsne = TSNE(n_components=2, random_state=42, perplexity=5)
     homophone_embeddings_2d = tsne.fit_transform(homophone_embeddings)
     baseline_embeddings_2d = tsne.fit_transform(np.array(baseline_embeddings))
 
