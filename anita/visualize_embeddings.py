@@ -98,9 +98,9 @@ if __name__ == "__main__":
             }
         )
         plt.figure(figsize=(10, 8))
+        plt.scatter(homophone_embeddings_2d[:, 0][0], homophone_embeddings_2d[:, 1][0], alpha=0.7, color='green')
         plt.scatter(homophone_embeddings_2d[:, 0][1:], homophone_embeddings_2d[:, 1][1:], alpha=0.7, color='blue')
         plt.scatter(baseline_embeddings_2d[:, 0], baseline_embeddings_2d[:, 1], alpha=0.7, color='red')
-        plt.scatter(homophone_embeddings_2d[:, 0][0], homophone_embeddings_2d[:, 1][0], alpha=0.7, color='green')
 
         # Annotate points with characters
         for i, char in enumerate(homophone_chars):
@@ -112,4 +112,5 @@ if __name__ == "__main__":
         plt.title('t-SNE Visualization of Character Embeddings')
         plt.xlabel('Dimension 1')
         plt.ylabel('Dimension 2')
+        plt.legend(['Original homophone', 'Homophone mates', 'Baseline characters'])
         plt.savefig(f'plots/t-SNE Visualization {str(x + 1)}.png')
